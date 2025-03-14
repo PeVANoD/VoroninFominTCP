@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art Gallery Home</title>
+    <style>
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .nav-buttons a {
+            text-decoration: none;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .nav-buttons a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Art Gallery</h1>
+    <p>Choose an option below:</p>
+
+    <div class="nav-buttons">
+        <a href="{% url 'paintingList' %}">View All Paintings</a>
+        <a href="{% url 'tag-search' %}">Search by Tag</a>
+        <a href="/admin/" class="admin-button">Admin Panel</a>
+    </div>
+</body>
+</html>

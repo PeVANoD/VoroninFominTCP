@@ -167,6 +167,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+#others
+venv
+
 # PyPI configuration file
 .pypirc
 6304_ВоронинФомин_ТСР_ЛР_0_през.pptx
