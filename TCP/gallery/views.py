@@ -1,6 +1,7 @@
 
-from django.shortcuts import  render,redirect
-from .models import  Tag, Painting
+from django.shortcuts import  render,redirect, get_object_or_404
+from .models import  Tag, Painting, Artist
+from django.db.models import Prefetch
 
 def paintingsList(request):
     paintings = Painting.objects.all()
@@ -23,3 +24,23 @@ def tagSearch(request):
 
 def home(request):
     return render(request, 'art/home.html')
+
+def artists(request):
+    all_artists = Artist.objects.all()
+    selected_artist_id = request.GET.get('artist_id')
+
+    if selected_artist_id:
+        selected_artist = Artist.objects.filter(id=selected_artist_id).prefetch_related(
+            Prefetch('artists', queryset=Painting.objects.all())
+        ).first()
+
+        paintings = selected_artist.artists.all() if selected_artist else Painting.objects.none()
+    else:
+        selected_artist = None
+        paintings = Painting.objects.none()
+
+    return render(request, 'art/artists.html', {
+        'paintings': paintings,
+        'artists': all_artists,
+        'selected_artist': selected_artist
+    })

@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Art Gallery Home</title>
     <style>
+        body {
+            background-image: url('images/bg.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            font-family: Arial, sans-serif;
+        }
+
         .nav-buttons {
             display: flex;
             gap: 10px;
@@ -21,7 +29,7 @@
         }
 
         .nav-buttons a:hover {
-            background-color: #0056b3;
+            background-color: #c161e3;
         }
     </style>
 </head>
@@ -32,6 +40,7 @@
     <div class="nav-buttons">
         <a href="{% url 'paintingList' %}">View All Paintings</a>
         <a href="{% url 'tag-search' %}">Search by Tag</a>
+        <a href="{% url 'artists' %}">View All Artists</a>
         <a href="/admin/" class="admin-button">Admin Panel</a>
     </div>
 </body>

@@ -7,4 +7,5 @@ urlpatterns = [
     path('', home, name='home'),
     path('paintingsList/',views.paintingsList,name = 'paintingList'),
     path('tag-search/', tagSearch, name='tag-search'),
+    path('artists/',views.artists,name = 'artists'),
 ]
