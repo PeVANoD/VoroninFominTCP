@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Paintings</title>
+    <style>
+        body {
+            background-color: rgba(106, 90, 205, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 50%, rgba(106, 90, 205, 0.05) 0%, rgba(106, 90, 205, 0.15) 100%);
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 15px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 5px;
+            border: 2px solid #6a5acd;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            color: #4b0082;
+            text-decoration: none;
+            font-weight: bold;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background-color: #fff;
+            transform: translateX(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 2px solid #9370db;
+            box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
+            color: #4b0082;
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .paintings-list {
+            list-style-type: none;
+            padding: 0;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .painting-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .painting-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .painting-item-content {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            box-shadow: 0 5px 20px rgba(106, 90, 205, 0.2);
+            border: 1px solid #e6e6fa;
+            transition: all 0.3s ease;
+        }
+
+        .painting-item-content:hover {
+            box-shadow: 0 8px 25px rgba(106, 90, 205, 0.3);
+            border-color: #9370db;
+        }
+
+        h2 {
+            color: #4b0082;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .image-container {
+            max-height: 70vh;
+            height: 100%;
+            width: auto;
+            overflow: hidden;
+            display: inline-block;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(106, 90, 205, 0.4);
+            border-radius: 5px;
+            border: 5px solid white;
+            transform: perspective(500px) rotateX(0deg);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .image-container:hover {
+            box-shadow: 0 10px 30px rgba(106, 90, 205, 0.6);
+        }
+
+        .image-container.clicked {
+            animation: pulse 1s forwards;
+        }
+        
+        .image-container.unhover {
+            animation: unpulse 0.3s forwards;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1.0) rotateX(0deg) perspective(500px);
+                filter: blur(0px);
+            }
+            15% {
+                transform: scale(0.9) rotateX(-5deg) perspective(500px);
+                filter: blur(1px);
+            }
+            40% {
+                transform: scale(1.35) rotateX(10deg) perspective(500px);
+                filter: blur(0px);
+            }
+            100% {
+                transform: scale(1.25) rotateX(0deg) perspective(500px);
+                box-shadow: 0 15px 40px rgba(106, 90, 205, 0.8);
+            }  
+        }
+        
+        @keyframes unpulse {
+            0% {
+                transform: scale(1.25) rotateX(0deg) perspective(500px);
+            }
+            10% {
+                transform: scale(1.3) rotateX(10deg) perspective(500px);
+            }
+            80% {
+                transform: scale(0.95) rotateX(-10deg) perspective(500px);
+            }
+            100% {
+                transform: scale(1.0) rotateX(0deg) perspective(500px);
+            }  
+        }
+
+        .image-container.clicked .tags .tag {
+            opacity: 1;
+            transition: opacity 0.3s ease 0.2s;
+            transform: scale(1.1);
+        }
+        
+        .image-container.unhover ~ .tags .tag {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .image-container img {
+            max-height: 100%;
+            max-width: 100%;
+            height: 70vh;
+            width: auto;
+            object-fit: contain;
+            display: block;
+        }
+
+        .description {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+            background-color: rgba(230, 230, 250, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #9370db;
+        }
+
+        .tags {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tag {
+            display: inline-block;
+            background-color: #6a5acd;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .tag:hover {
+            background-color: #4b0082;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <a href="{% url 'home' %}" class="back-button">← Back to Home</a>
+    <ul class="paintings-list">
+    {% for p in paintings %}
+        <li class="painting-item">
+            <div class="painting-item-content">
+                <h2>{{ p.title }}</h2>
+                <div class="tags">
+                    {% for tag in p.tags.all %}
+                        <span class="tag">{{ tag.name }}</span>
+                    {% endfor %}
+                </div>
+                <div class="image-container" onclick="toggleScale(event)" onmouseleave="resetScale(event)">
+                    <img src="{{ p.imageURL }}" alt="{{ p.title }}">
+                </div>
+                <p class="description">{{ p.description }}</p>
+            </div>
+        </li>
+    {% endfor %}
+    </ul>
+    <script>
+        function toggleScale(event) {
+            const imageContainer = event.currentTarget;
+            const paintingItem = imageContainer.closest('.painting-item-content');
+            const tags = paintingItem.querySelectorAll('.tag');
+            
+            imageContainer.classList.remove('clicked');
+            imageContainer.classList.remove('unhover');
+            void imageContainer.offsetWidth; // Trigger reflow
+            imageContainer.classList.add('clicked');
+            
+            tags.forEach(tag => {
+                tag.style.opacity = '0';
+                tag.style.transition = 'opacity 0.3s ease 0.1s, transform 0.3s ease';
+            });
+        }
+        
+        function resetScale(event) {
+            const imageContainer = event.currentTarget;
+            const paintingItem = imageContainer.closest('.painting-item-content');
+            const tags = paintingItem.querySelectorAll('.tag');
+            
+            if (imageContainer.classList.contains('clicked')) {
+                imageContainer.classList.remove('clicked');
+                imageContainer.classList.add('unhover');
+
+                setTimeout(() => {
+                    tags.forEach(tag => {
+                        tag.style.opacity = '1';
+                        tag.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    });
+                }, 200);
+            }
+        }
+    </script>
+</body>
+</html>
