@@ -188,10 +188,29 @@
     </style>
 </head>
 <body>
+    {% if user.is_authenticated %}
+    <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+    {% else %}
+    <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+    {% endif %}
     <a href="{% url 'home' %}" class="back-button">← Back to Home</a>
     
     <div class="container mt-4">
         <h1 class="text-center mb-4">Art Gallery Manager Panel</h1>
+        
+        {% if not user.is_authenticated %}
+        <!-- Блок для гостевого доступа -->
+        <div class="guest-message">
+            <h3>Guest Access</h3>
+            <p>You are currently viewing this page as a guest. Guest users have read-only access to the gallery content.</p>
+            <p>To unlock full management capabilities, please login or register.</p>
+            
+            <div class="guest-actions">
+                <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+                <a href="{% url 'register' %}" class="btn btn-success">Register</a>
+            </div>
+        </div>
+        {% endif %}
         
         <!-- Навигационные табы -->
         <ul class="nav nav-tabs" id="myTab" role="tablist">
@@ -210,7 +229,9 @@
             <!-- Tags Tab -->
             <div class="tab-pane fade show active" id="tags" role="tabpanel">
                 <h2>Tags Management</h2>
-                <!-- Форма для создания/редактирования тега -->
+
+                {% if user.is_authenticated %}
+                <!-- Форма для создания/редактирования тега (только для авторизованных) -->
                 <form method="post" class="mb-4">
                     {% csrf_token %}
                     <input type="hidden" name="tag_id" id="tag_id" value="">
@@ -225,6 +246,7 @@
                         </div>
                     </div>
                 </form>
+                {% endif %}
                 
                 <!-- Таблица тегов -->
                 <table class="table table-striped">
@@ -240,6 +262,7 @@
                         <tr>
                             <td>{{ tag.id }}</td>
                             <td>{{ tag.name }}</td>
+                            {% if user.is_authenticated %}
                             <td>
                                 <button class="btn btn-sm btn-warning edit-tag" data-id="{{ tag.id }}" data-name="{{ tag.name }}">Edit</button>
                                 <form method="post" style="display:inline;">
@@ -248,6 +271,7 @@
                                     <button type="submit" class="btn btn-sm btn-danger" name="action" value="delete_tag">Delete</button>
                                 </form>
                             </td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -257,6 +281,8 @@
             <!-- Artists Tab -->
             <div class="tab-pane fade" id="artists" role="tabpanel">
                 <h2>Artists Management</h2>
+
+                {% if user.is_authenticated %}
                 <!-- Форма для создания/редактирования художника -->
                 <form method="post" class="mb-4" enctype="multipart/form-data">
                     {% csrf_token %}
@@ -281,7 +307,8 @@
                         <button type="button" class="btn btn-secondary d-none" id="cancel_artist_btn">Cancel</button>
                     </div>
                 </form>
-                
+                {% endif %}
+
                 <!-- Таблица художников -->
                 <table class="table table-striped">
                     <thead>
@@ -289,7 +316,7 @@
                             <th>ID</th>
                             <th>Name</th>
                             <th>Photo</th>
-                            <th>Actions</th>
+                            {% if user.is_authenticated %}<th>Actions</th>{% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -298,6 +325,7 @@
                             <td>{{ artist.id }}</td>
                             <td>{{ artist.name }}</td>
                             <td><img src="{{ artist.photoURL }}" alt="{{ artist.name }}" style="max-height: 50px;"></td>
+                            {% if user.is_authenticated %}
                             <td>
                                 <button class="btn btn-sm btn-warning edit-artist" 
                                         data-id="{{ artist.id }}" 
@@ -310,6 +338,7 @@
                                     <button type="submit" class="btn btn-sm btn-danger" name="action" value="delete_artist">Delete</button>
                                 </form>
                             </td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -319,6 +348,8 @@
             <!-- Paintings Tab -->
             <div class="tab-pane fade" id="paintings" role="tabpanel">
                 <h2>Paintings Management</h2>
+
+                {% if user.is_authenticated %}
                 <!-- Форма для создания/редактирования картины -->
                 <form method="post" class="mb-4" id="painting-form">
                     {% csrf_token %}
@@ -361,7 +392,8 @@
                         <button type="button" class="btn btn-secondary d-none" id="cancel-painting-btn">Cancel</button>
                     </div>
                 </form>
-                
+                {% endif %}
+
                 <!-- Таблица картин -->
                 <table class="table table-striped">
                     <thead>
@@ -371,7 +403,7 @@
                             <th>Image</th>
                             <th>Artists</th>
                             <th>Tags</th>
-                            <th>Actions</th>
+                            {% if user.is_authenticated %}<th>Actions</th>{% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -390,6 +422,7 @@
                                 {{ tag.name }}{% if not forloop.last %}, {% endif %}
                                 {% endfor %}
                             </td>
+                            {% if user.is_authenticated %}
                             <td>
                                 <button class="btn btn-sm btn-warning edit-painting" 
                                         data-id="{{ painting.id }}" 
@@ -404,6 +437,7 @@
                                     <button type="submit" class="btn btn-sm btn-danger" name="action" value="delete_painting">Delete</button>
                                 </form>
                             </td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>

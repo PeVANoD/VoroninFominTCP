@@ -26,13 +26,42 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.7);
             width: 80%;
             max-width: 900px;
+            position: relative;
+        }
+
+        .auth-buttons {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .auth-buttons a {
+            text-decoration: none;
+            padding: 8px 15px;
+            background-color: white;
+            color: #007bff;
+            font-size: 14px;
+            border: 2px solid #007bff;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .auth-buttons a:hover {
+            background-color: #f0f0f0;
+            transform: translateY(-2px);
         }
 
         .nav-buttons {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            margin-top: 20px;
+            margin-top: 40px;
         }
 
         .nav-buttons a {
@@ -64,18 +93,49 @@
             .nav-buttons {
                 grid-template-columns: 1fr;
             }
+
+            .auth-buttons {
+                position: static;
+                margin-bottom: 20px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        {% if not user.is_authenticated %}
+            <div class="auth-buttons">
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'register' %}">Register</a>
+            </div>
+        {% else %}
+            <div class="auth-buttons">
+            <a href="{% url 'logout' %}">Logout</a>
+            </div>
+        {% endif %}
+        
+        {% if user.is_authenticated and user.is_artist %}
+        <li class="nav-item">
+            <a class="nav-link" href="{% url 'artist_dashboard' %}">Artist Dashboard</a>
+        </li>
+        {% endif %}
+
         <h1 style="text-align: center;">Welcome to the Art Gallery</h1>
         <div class="nav-buttons">
             <a href="{% url 'paintingList' %}">View All Paintings</a>
-            <a href="{% url 'tag-search' %}">Search by Tag</a>
+            <!--<a href="{% url 'tag-search' %}">Search by Tag</a>-->
             <a href="{% url 'artists' %}">View All Artists</a>
-            <a href="/admin/">Admin Panel</a>
-            <a href="{% url 'manage_content' %}">Manage Content</a>
+            {% if user.is_authenticated %}
+                {% if not user.is_superuser %}
+                <a href="{% url 'artist_dashboard' %}">Profile</a>
+                {% else %}
+                <a href="/admin/">Admin Panel</a>
+                {% endif %}
+            {% endif %}
+            <!--<a href="{% url 'manage_content' %}">Manage Content</a>-->
+
         </div>
     </div>
 </body>

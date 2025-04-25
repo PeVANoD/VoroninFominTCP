@@ -218,6 +218,13 @@
     </style>
 </head>
 <body>
+    {% if user.is_authenticated %}
+    <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+    {% else %}
+    <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+    <form onsubmit="return confirm('Are you sure you want to logout?');"></form>
+    {% endif %}
+
     <a href="{% url 'home' %}" class="back-button">← Back to Home</a>
     <ul class="paintings-list">
     {% for p in paintings %}
@@ -238,6 +245,7 @@
     {% endfor %}
     </ul>
     <script>
+        
         function toggleScale(event) {
             const imageContainer = event.currentTarget;
             const paintingItem = imageContainer.closest('.painting-item-content');

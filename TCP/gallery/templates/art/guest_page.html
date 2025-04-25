@@ -47,45 +47,10 @@
             border: 2px solid #9370db;
             box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
             color: #4b0082;
-            margin: 20px 0 30px;
+            margin-bottom: 30px;
             text-align: center;
             font-weight: 600;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-        }
-
-        .artist-select-form {
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(106, 90, 205, 0.2);
-            margin-bottom: 30px;
-            width: 100%;
-            max-width: 600px;
-            border: 1px solid #e6e6fa;
-        }
-
-        .artist-select-form label {
-            display: block;
-            margin-bottom: 10px;
-            color: #4b0082;
-            font-weight: 500;
-        }
-
-        .artist-select-form select {
-            width: 100%;
-            padding: 10px 15px;
-            border: 1px solid #9370db;
-            border-radius: 5px;
-            background-color: white;
-            color: #4b0082;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .artist-select-form select:focus {
-            outline: none;
-            border-color: #6a5acd;
-            box-shadow: 0 0 0 0.25rem rgba(106, 90, 205, 0.25);
         }
 
         .paintings-list {
@@ -250,62 +215,42 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
-
-        .no-paintings {
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #e6e6fa;
-            color: #4b0082;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(106, 90, 205, 0.2);
-        }
     </style>
 </head>
 <body>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <div class="container mt-5">
+        <div class="alert alert-info">
+            <h4>Guest Access</h4>
+            <p>You are viewing this page as a guest. Please login or register for full access.</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'login' %}" class="btn btn-primary">Login</a>
+                <a href="{% url 'register' %}" class="btn btn-success">Register</a>
+            </div>
+        </div>
+
+        <h3 class="mt-4">Featured Paintings (Read Only)</h3>
+
     <a href="{% url 'home' %}" class="back-button">← Back to Home</a>
-
-    {% if selected_artist %}
-        <h1>Paintings by {{ selected_artist.name }}</h1>
-    {% else %}
-        <h1>Select an Artist</h1>
-    {% endif %}
-
-    <form method="get" action="{% url 'artists' %}" class="artist-select-form">
-        <label for="artist-select">Select Artist:</label>
-        <select id="artist-select" name="username" onchange="this.form.submit()">
-            <option value="" {% if not selected_username %}selected{% endif %}>-- Select an artist --</option>
-            {% for user in artist_users %}
-                <option value="{{ user.username }}" {% if user.username == selected_username %}selected{% endif %}>
-                    {{ user.username }}
-                </option>
-            {% endfor %}
-        </select>
-    </form>
-
-    {% if paintings %}
-        <ul class="paintings-list">
-            {% for p in paintings %}
-            <li class="painting-item">
-                <div class="painting-item-content">
-                    <h2>{{ p.title }}</h2>
-                    <div class="tags">
-                        {% for tag in p.tags.all %}
-                            <span class="tag">{{ tag.name }}</span>
-                        {% endfor %}
-                    </div>
-                    <div class="image-container" onclick="toggleScale(event)" onmouseleave="resetScale(event)">
-                        <img src="{{ p.imageURL }}" alt="{{ p.title }}">
-                    </div>
-                    <p class="description">{{ p.description }}</p>
+    <ul class="paintings-list">
+    {% for p in paintings %}
+        <li class="painting-item">
+            <div class="painting-item-content">
+                <h2>{{ p.title }}</h2>
+                <div class="tags">
+                    {% for tag in p.tags.all %}
+                        <span class="tag">{{ tag.name }}</span>
+                    {% endfor %}
                 </div>
-            </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p class="no-paintings">No paintings available for the selected artist.</p>
-    {% endif %}
-
+                <div class="image-container" onclick="toggleScale(event)" onmouseleave="resetScale(event)">
+                    <img src="{{ p.imageURL }}" alt="{{ p.title }}">
+                </div>
+                <p class="description">{{ p.description }}</p>
+            </div>
+        </li>
+    {% endfor %}
+    </ul>
     <script>
         function toggleScale(event) {
             const imageContainer = event.currentTarget;

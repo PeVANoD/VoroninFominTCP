@@ -3,6 +3,14 @@ from django.shortcuts import  render,redirect, get_object_or_404
 from .models import  Tag, Painting, Artist
 from django.db.models import Prefetch
 from django.core.paginator import Paginator
+
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import update_session_auth_hash
+from .serializers import RegisterSerializer, ChangePasswordSerializer, CustomTokenObtainPairSerializer
+
 @csrf_exempt
 def paintingsList(request):
     paintings = Painting.objects.all()
@@ -25,40 +33,62 @@ def tagSearch(request):
 @csrf_exempt
 def home(request):
     return render(request, 'art/home.html')
+
+from django.contrib.auth import get_user_model
+from django.db.models import Prefetch
+User = get_user_model()
 @csrf_exempt
 def artists(request):
-    all_artists = Artist.objects.all()
-    selected_artist_id = None
+    # Получаем всех пользователей с пометкой is_artist=True
+    artist_users = User.objects.filter(is_artist=True).select_related('artist')
+    selected_username = request.GET.get('username')
     paintings = None
 
-    selected_artist_id = request.GET.get('artist_id')
-    if selected_artist_id:
-        selected_artist = Artist.objects.filter(id=selected_artist_id).prefetch_related(
-            Prefetch('artists', queryset=Painting.objects.all())
-        ).first()
-
-        paintings = selected_artist.artists.all() if selected_artist else Painting.objects.none()
+    if selected_username:
+        try:
+            artist_user = artist_users.get(username=selected_username)
+            paintings = Painting.objects.filter(artist=artist_user.artist)
+        except User.DoesNotExist:
+            paintings = Painting.objects.none()
     else:
-        selected_artist = None
         paintings = Painting.objects.none()
 
     return render(request, 'art/artists.html', {
         'paintings': paintings,
-        'artists': all_artists,
-        'selected_artist': selected_artist
+        'artist_users': artist_users,
+        'selected_username': selected_username
     })
+from django.contrib.auth.models import AnonymousUser
+from django.views.decorators.http import require_http_methods
+from rest_framework.response import Response
+from django.shortcuts import render, redirect
+from rest_framework import status
+from django.contrib.auth.decorators import login_required
+
+def auth_page(request):
+    return render(request, 'art/auth.html')
+
+@require_http_methods(["GET"])
+def auth_page(request):
+    return render(request, 'art/auth.html')
 
 #CRUD
 @csrf_exempt
-def manage_content(request):
-    # Получаем все данные для отображения
+@api_view(['GET', 'POST'])
+def manage_content(request): #проверяем залогинен ли польховатль и тогда перекидываем.
+    if isinstance(request.user, AnonymousUser):
+        paintings = Painting.objects.all()
+        return render(request, 'art/guest_page.html', {
+            'paintings': paintings
+        })
+    
+    # Остальной код для авторизованных пользователей
     context = {
         'tags': Tag.objects.all(),
         'artists': Artist.objects.all(),
         'paintings': Painting.objects.all().prefetch_related('artist', 'tags')
     }
     
-    # Обработка POST запросов (CRUD операции)
     if request.method == 'POST':
         action = request.POST.get('action')
         
@@ -97,18 +127,135 @@ def manage_content(request):
             )
             painting.artist.set(request.POST.getlist('artists'))
             painting.tags.set(request.POST.getlist('tags'))
-        elif action == 'update_painting':
-            painting = Painting.objects.get(id=request.POST.get('painting_id'))
-            painting.title = request.POST.get('title')
-            painting.imageURL = request.POST.get('image_url')
-            painting.description = request.POST.get('description', '')
-            painting.save()
-            painting.artist.set(request.POST.getlist('artists'))
-            painting.tags.set(request.POST.getlist('tags'))
-        elif action == 'delete_painting':
-            Painting.objects.get(id=request.POST.get('painting_id')).delete()
         
-        return redirect('manage_content')  # Редирект после POST
+        return redirect('manage_content')
     
     return render(request, 'art/manage_content.html', context)
 
+
+#JWT
+
+
+def guest_page(request):
+    paintings = Painting.objects.all()
+    return render(request, 'art/guest_page.html', {
+        'paintings': paintings
+    })
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import UserCreationForm
+
+def custom_logout(request):
+    logout(request)
+    messages.success(request, "You have been successfully logged out.")
+    return redirect('home')  # Перенаправляем на страницу входа
+
+def custom_login(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            login(request, user)
+            return redirect('home')  # Замените 'home' на нужный URL
+        else:
+            messages.error(request, 'Invalid username or password')
+    
+    return render(request, 'registration/custom_login.html')
+
+from .forms import CustomUserCreationForm  # Add this import
+
+def custom_register(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_artist = form.cleaned_data.get('is_artist', False)
+            user.save()
+            login(request, user)
+            messages.success(request, 'Registration successful!')
+            return redirect('home')
+        else:
+            for error in form.errors.values():
+                messages.error(request, error)
+    else:
+        form = CustomUserCreationForm()
+    
+    return render(request, 'registration/custom_register.html', {'form': form})
+
+from .forms import ArtistProfileForm, PaintingForm
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+@login_required
+def artist_dashboard(request):
+    if not request.user.is_artist:
+        return redirect('home')
+    
+    artist = get_object_or_404(Artist, user=request.user)
+    all_tags = Tag.objects.all()
+    
+    # Handle profile form
+    if request.method == 'POST' and 'profile_form' in request.POST:
+        profile_form = ArtistProfileForm(request.POST, request.FILES, instance=artist)
+        if profile_form.is_valid():
+            profile_form.save()
+            return redirect('artist_dashboard')
+    else:
+        profile_form = ArtistProfileForm(instance=artist)
+    
+    # Handle tag operations
+    if request.method == 'POST' and 'action' in request.POST:
+        if request.POST['action'] == 'create_tag':
+            tag_name = request.POST.get('tag_name')
+            if tag_name:
+                Tag.objects.get_or_create(name=tag_name)
+                return redirect('artist_dashboard')
+        
+        elif request.POST['action'] == 'update_tag':
+            tag_id = request.POST.get('tag_id')
+            tag_name = request.POST.get('tag_name')
+            if tag_id and tag_name:
+                tag = get_object_or_404(Tag, id=tag_id)
+                tag.name = tag_name
+                tag.save()
+                return redirect('artist_dashboard')
+        
+        elif request.POST['action'] == 'delete_painting':
+            painting_id = request.POST.get('painting_id')
+            if painting_id:
+                painting = get_object_or_404(Painting, id=painting_id, artist=artist)
+                painting.delete()
+                return redirect('artist_dashboard')
+    
+    # Handle painting form
+    if request.method == 'POST' and 'painting_form' in request.POST:
+        painting_id = request.POST.get('painting_id')
+        
+        if painting_id:  # Editing existing painting
+            painting = get_object_or_404(Painting, id=painting_id, artist=artist)
+            painting_form = PaintingForm(request.POST, request.FILES, instance=painting)
+        else:  # Creating new painting
+            painting_form = PaintingForm(request.POST, request.FILES)
+        
+        if painting_form.is_valid():
+            painting = painting_form.save(commit=False)
+            painting.artist = artist
+            if 'image' in request.FILES:
+                painting.image = request.FILES['image']
+            painting.save()
+            painting_form.save_m2m()  # For tags
+            return redirect('artist_dashboard')
+    else:
+        painting_form = PaintingForm()
+    
+    # Get all artist's paintings
+    paintings = Painting.objects.filter(artist=artist).order_by('-created_at')
+    
+    return render(request, 'artist/dashboard.html', {
+        'artist': artist,
+        'profile_form': profile_form,
+        'painting_form': painting_form,
+        'paintings': paintings,
+        'all_tags': all_tags,
+    })

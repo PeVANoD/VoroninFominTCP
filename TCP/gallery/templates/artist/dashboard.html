@@ -1,0 +1,673 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Artist Paintings</title>
+        <style>
+            :root {
+                --primary-color: #6a5acd;
+                --primary-light: #9370db;
+                --primary-dark: #4b0082;
+                --secondary-color: #e6e6fa;
+                --text-color: #333;
+                --light-text: #555;
+                --white: #ffffff;
+                --shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
+            }
+            
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            
+            body {
+                background-color: rgba(106, 90, 205, 0.1);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                margin: 0;
+                padding: 20px;
+                min-height: 100vh;
+                background-image: radial-gradient(circle at 50% 50%, rgba(106, 90, 205, 0.05) 0%, rgba(106, 90, 205, 0.15) 100%);
+                color: var(--text-color);
+                line-height: 1.6;
+            }
+
+            .container {
+                width: 100%;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+
+            .alert {
+                padding: 15px;
+                margin-bottom: 20px;
+                border: 1px solid transparent;
+                border-radius: 4px;
+            }
+
+            .alert-danger {
+                color: #721c24;
+                background-color: #f8d7da;
+                border-color: #f5c6cb;
+                width: 100%;
+                text-align: center;
+                max-width: 800px;
+                margin: 20px auto;
+            }
+
+            .back-button {
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                padding: 10px 15px;
+                background-color: rgba(255, 255, 255, 0.9);
+                border-radius: 5px;
+                border: 2px solid var(--primary-color);
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+                color: var(--primary-dark);
+                text-decoration: none;
+                font-weight: bold;
+                z-index: 1000;
+                transition: all 0.3s ease;
+            }
+            
+            .back-button:hover {
+                background-color: var(--white);
+                transform: translateX(-3px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            }
+
+            h1, h2, h3, h4, h5, h6 {
+                color: var(--primary-dark);
+                margin-bottom: 15px;
+                font-weight: 600;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            }
+
+            h1 {
+                background-color: rgba(255, 255, 255, 0.9);
+                padding: 15px 30px;
+                border-radius: 10px;
+                border: 2px solid var(--primary-light);
+                box-shadow: var(--shadow);
+                margin-bottom: 30px;
+                text-align: center;
+            }
+
+            .card {
+                background-color: var(--white);
+                border-radius: 10px;
+                box-shadow: 0 5px 20px rgba(106, 90, 205, 0.2);
+                border: 1px solid var(--secondary-color);
+                transition: all 0.3s ease;
+                margin-bottom: 20px;
+                overflow: hidden;
+            }
+
+            .card:hover {
+                box-shadow: 0 8px 25px rgba(106, 90, 205, 0.3);
+                border-color: var(--primary-light);
+            }
+
+            .card-header {
+                background-color: var(--primary-color);
+                color: var(--white);
+                padding: 15px 20px;
+                border-bottom: 1px solid rgba(0,0,0,0.1);
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+
+            .row {
+                display: flex;
+                flex-wrap: wrap;
+                margin: 0 -15px;
+            }
+
+            .col-md-4, .col-md-8 {
+                padding: 0 15px;
+                flex: 0 0 100%;
+            }
+
+            @media (min-width: 768px) {
+                .col-md-4 {
+                    flex: 0 0 33.333333%;
+                    max-width: 33.333333%;
+                }
+                .col-md-8 {
+                    flex: 0 0 66.666667%;
+                    max-width: 66.666667%;
+                }
+            }
+
+            .mb-3, .mb-4 {
+                margin-bottom: 1rem !important;
+            }
+
+            .mt-4 {
+                margin-top: 1.5rem !important;
+            }
+
+            .btn {
+                display: inline-block;
+                font-weight: 400;
+                text-align: center;
+                white-space: nowrap;
+                vertical-align: middle;
+                user-select: none;
+                border: 1px solid transparent;
+                padding: 0.375rem 0.75rem;
+                font-size: 1rem;
+                line-height: 1.5;
+                border-radius: 0.25rem;
+                transition: all 0.15s ease-in-out;
+                cursor: pointer;
+            }
+
+            .btn-primary {
+                color: var(--white);
+                background-color: var(--primary-color);
+                border-color: var(--primary-color);
+            }
+
+            .btn-primary:hover {
+                background-color: var(--primary-dark);
+                border-color: var(--primary-dark);
+            }
+
+            .btn-success {
+                color: var(--white);
+                background-color: #28a745;
+                border-color: #28a745;
+            }
+
+            .btn-success:hover {
+                background-color: #218838;
+                border-color: #1e7e34;
+            }
+
+            .btn-warning {
+                background-color: #ffc107;
+                border-color: #ffc107;
+                color: #212529;
+            }
+
+            .btn-warning:hover {
+                background-color: #e0a800;
+                border-color: #d39e00;
+            }
+
+            .btn-danger {
+                color: var(--white);
+                background-color: #dc3545;
+                border-color: #dc3545;
+            }
+
+            .btn-danger:hover {
+                background-color: #c82333;
+                border-color: #bd2130;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            label {
+                display: inline-block;
+                margin-bottom: 0.5rem;
+            }
+
+            .form-control {
+                display: block;
+                width: 100%;
+                padding: 0.375rem 0.75rem;
+                font-size: 1rem;
+                line-height: 1.5;
+                color: #495057;
+                background-color: var(--white);
+                background-clip: padding-box;
+                border: 1px solid #ced4da;
+                border-radius: 0.25rem;
+                transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            }
+
+            .form-control:focus {
+                color: #495057;
+                background-color: var(--white);
+                border-color: var(--primary-light);
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(106, 90, 205, 0.25);
+            }
+
+            .form-select {
+                display: block;
+                width: 100%;
+                padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+                font-size: 1rem;
+                line-height: 1.5;
+                color: #495057;
+                background-color: var(--white);
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+                background-repeat: no-repeat;
+                background-position: right 0.75rem center;
+                background-size: 16px 12px;
+                border: 1px solid #ced4da;
+                border-radius: 0.25rem;
+                transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            }
+
+            .form-select:focus {
+                border-color: var(--primary-light);
+                outline: 0;
+                box-shadow: 0 0 0 0.2rem rgba(106, 90, 205, 0.25);
+            }
+
+            .form-select[multiple] {
+                height: auto;
+                padding-right: 0.75rem;
+                background-image: none;
+            }
+
+            .card-img-top {
+                width: 100%;
+                height: 200px;
+                object-fit: cover;
+                border-top-left-radius: calc(0.25rem - 1px);
+                border-top-right-radius: calc(0.25rem - 1px);
+            }
+
+            .badge {
+                display: inline-block;
+                padding: 0.25em 0.4em;
+                font-size: 75%;
+                font-weight: 700;
+                line-height: 1;
+                text-align: center;
+                white-space: nowrap;
+                vertical-align: baseline;
+                border-radius: 0.25rem;
+                transition: all 0.3s ease;
+            }
+
+            .bg-secondary {
+                background-color: #6c757d !important;
+            }
+
+            .tags {
+                margin-top: 10px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .painting-item {
+                transition: transform 0.3s ease;
+            }
+
+            .painting-item:hover {
+                transform: translateY(-5px);
+            }
+
+            .card-text {
+                color: var(--light-text);
+                margin-bottom: 10px;
+            }
+
+            .painting-actions {
+                margin-top: 10px;
+                display: flex;
+                gap: 5px;
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            /* Animation for painting cards */
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            .col-md-4 {
+                animation: fadeIn 0.5s ease forwards;
+            }
+
+            .col-md-4:nth-child(1) { animation-delay: 0.1s; }
+            .col-md-4:nth-child(2) { animation-delay: 0.2s; }
+            .col-md-4:nth-child(3) { animation-delay: 0.3s; }
+            .col-md-4:nth-child(4) { animation-delay: 0.4s; }
+            .col-md-4:nth-child(5) { animation-delay: 0.5s; }
+            .col-md-4:nth-child(6) { animation-delay: 0.6s; }
+
+            /* Tag management section */
+            .tag-management {
+                margin-bottom: 20px;
+                padding: 15px;
+                background-color: #f8f9fa;
+                border-radius: 5px;
+                border: 1px solid #dee2e6;
+            }
+
+            .tag-form-row {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+
+            .tag-form-row input {
+                flex-grow: 1;
+            }
+
+            .tag-form-buttons {
+                display: flex;
+                gap: 10px;
+            }
+
+            /* Painting edit form */
+            .edit-painting-form {
+                background-color: #f8f9fa;
+                padding: 20px;
+                border-radius: 5px;
+                margin-top: 20px;
+                border: 1px solid #dee2e6;
+            }
+        </style>
+    </head>
+    <body>
+        <a href="{% url 'home' %}" class="back-button">← Home</a>
+
+        {% block content %}
+        {% if not user.is_authenticated or not user.is_artist %}
+        <div class="alert alert-danger">
+            You don't have permission to access this page.
+        </div>
+        {% else %}
+        <div class="container mt-4">
+            <h1>Artist Dashboard</h1>
+            <div class="row">
+                <div class="col-md-4">
+                    <!-- Profile Block -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3>Your Profile</h3>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" name="profile_form" value="1">
+                                <div class="form-group">
+                                    <label for="id_username">Username</label>
+                                    <input type="text" class="form-control" id="id_username" name="username" value="{{ user.username }}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="id_email">Email</label>
+                                    <input type="email" class="form-control" id="id_email" name="email" value="{{ user.email }}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="id_bio">Bio</label>
+                                    <textarea class="form-control" id="id_bio" name="bio" rows="3">{{ user.artist.bio }}</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="id_profile_picture">Profile Picture</label>
+                                    <input type="file" class="form-control" id="id_profile_picture" name="profile_picture">
+                                    {% if user.artist.photoURL %}
+                                    <small class="text-muted">Current: {{ user.artist.photoURL.name }}</small>
+                                    {% endif %}
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Profile</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tag Management -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3>Tag Management</h3>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" id="tag-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="tag_id" id="tag_id" value="">
+                                <div class="form-group">
+                                    <label for="tag_name">Tag Name</label>
+                                    <div class="tag-form-row">
+                                        <input type="text" class="form-control" id="tag_name" name="tag_name" placeholder="Enter tag name" required>
+                                    </div>
+                                </div>
+                                <div class="tag-form-buttons">
+                                    <button type="submit" class="btn btn-primary" name="action" value="create_tag" id="create-tag-btn">Create Tag</button>
+                                    <button type="submit" class="btn btn-success hidden" name="action" value="update_tag" id="update-tag-btn">Update Tag</button>
+                                    <button type="button" class="btn btn-secondary hidden" id="cancel-tag-btn">Cancel</button>
+                                </div>
+                            </form>
+
+                            <div class="mt-3">
+                                <h5>Available Tags</h5>
+                                <div class="tags">
+                                    {% for tag in all_tags %}
+                                    <span class="badge bg-secondary tag-item" data-id="{{ tag.id }}" data-name="{{ tag.name }}">
+                                        {{ tag.name }}
+                                        <button class="btn btn-sm btn-warning edit-tag-btn" data-id="{{ tag.id }}">✏️</button>
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8">
+                    <!-- Add/Edit Painting Form -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 id="painting-form-title">Add New Painting</h3>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data" id="painting-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="painting_id" id="painting_id" value="">
+                                <input type="hidden" name="painting_form" value="1">
+                                <div class="form-group">
+                                    <label for="id_title">Title</label>
+                                    <input type="text" class="form-control" id="id_title" name="title" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="id_description">Description</label>
+                                    <textarea class="form-control" id="id_description" name="description" rows="3" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="id_image">Image</label>
+                                    <input type="file" class="form-control" id="id_image" name="image">
+                                    <small id="current-image" class="text-muted"></small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="id_tags">Tags</label>
+                                    <select class="form-select" id="id_tags" name="tags" multiple>
+                                        {% for tag in all_tags %}
+                                        <option value="{{ tag.id }}">{{ tag.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-buttons">
+                                    <button type="submit" class="btn btn-success" id="submit-painting-btn">Add Painting</button>
+                                    <button type="button" class="btn btn-secondary hidden" id="cancel-edit-btn">Cancel Edit</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Paintings List -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Your Paintings</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for painting in paintings %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="card h-100 painting-item" data-id="{{ painting.id }}">
+                                        <img src="{{ painting.image.url }}" class="card-img-top" alt="{{ painting.title }}">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ painting.title }}</h5>
+                                            <p class="card-text">{{ painting.description|truncatechars:50 }}</p>
+                                            <div class="tags">
+                                                {% for tag in painting.tags.all %}
+                                                <span class="badge bg-secondary">{{ tag.name }}</span>
+                                                {% empty %}
+                                                <span class="text-muted">No tags</span>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="painting-actions">
+                                                <button class="btn btn-sm btn-warning edit-painting-btn" data-id="{{ painting.id }}">Edit</button>
+                                                <form method="post" class="delete-painting-form" style="display:inline;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="painting_id" value="{{ painting.id }}">
+                                                    <button type="submit" class="btn btn-sm btn-danger" name="action" value="delete_painting">Delete</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="col-12">
+                                    <p>You haven't added any paintings yet.</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endblock %}
+
+        <script>
+
+            // Tag management functionality
+            const tagForm = document.getElementById('tag-form');
+            const createTagBtn = document.getElementById('create-tag-btn');
+            const updateTagBtn = document.getElementById('update-tag-btn');
+            const cancelTagBtn = document.getElementById('cancel-tag-btn');
+            const tagIdInput = document.getElementById('tag_id');
+            const tagNameInput = document.getElementById('tag_name');
+
+            // Edit tag button click handler
+            document.querySelectorAll('.edit-tag-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const tagItem = this.closest('.tag-item');
+                    const tagId = tagItem.getAttribute('data-id');
+                    const tagName = tagItem.getAttribute('data-name');
+                    
+                    tagIdInput.value = tagId;
+                    tagNameInput.value = tagName;
+                    
+                    createTagBtn.classList.add('hidden');
+                    updateTagBtn.classList.remove('hidden');
+                    cancelTagBtn.classList.remove('hidden');
+                    
+                    tagNameInput.focus();
+                });
+            });
+
+            // Cancel tag edit
+            cancelTagBtn.addEventListener('click', function() {
+                tagIdInput.value = '';
+                tagNameInput.value = '';
+                createTagBtn.classList.remove('hidden');
+                updateTagBtn.classList.add('hidden');
+                this.classList.add('hidden');
+            });
+
+            // Painting form functionality
+            const paintingForm = document.getElementById('painting-form');
+            const paintingIdInput = document.getElementById('painting_id');
+            const paintingTitleInput = document.getElementById('id_title');
+            const paintingDescInput = document.getElementById('id_description');
+            const paintingImageInput = document.getElementById('id_image');
+            const paintingTagsSelect = document.getElementById('id_tags');
+            const submitPaintingBtn = document.getElementById('submit-painting-btn');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
+            const paintingFormTitle = document.getElementById('painting-form-title');
+            const currentImageText = document.getElementById('current-image');
+
+            // Edit painting button click handler
+            document.querySelectorAll('.edit-painting-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const paintingId = this.getAttribute('data-id');
+                    const paintingCard = this.closest('.painting-item');
+                    const paintingTitle = paintingCard.querySelector('.card-title').textContent;
+                    const paintingDesc = paintingCard.querySelector('.card-text').textContent;
+                    const paintingTags = Array.from(paintingCard.querySelectorAll('.tags .badge')).map(el => el.textContent.trim());
+                    
+                    // Set form values
+                    paintingIdInput.value = paintingId;
+                    paintingTitleInput.value = paintingTitle;
+                    paintingDescInput.value = paintingDesc;
+                    
+                    // Set selected tags
+                    Array.from(paintingTagsSelect.options).forEach(option => {
+                        option.selected = paintingTags.includes(option.text);
+                    });
+                    
+                    // Update form UI
+                    paintingFormTitle.textContent = 'Edit Painting';
+                    submitPaintingBtn.textContent = 'Update Painting';
+                    currentImageText.textContent = 'Current image will be kept if no new file is selected';
+                    cancelEditBtn.classList.remove('hidden');
+                    
+                    // Scroll to form
+                    paintingForm.scrollIntoView({ behavior: 'smooth' });
+                });
+            });
+
+            // Cancel painting edit
+            cancelEditBtn.addEventListener('click', function() {
+                paintingIdInput.value = '';
+                paintingTitleInput.value = '';
+                paintingDescInput.value = '';
+                paintingImageInput.value = '';
+                Array.from(paintingTagsSelect.options).forEach(option => {
+                    option.selected = false;
+                });
+                
+                paintingFormTitle.textContent = 'Add New Painting';
+                submitPaintingBtn.textContent = 'Add Painting';
+                currentImageText.textContent = '';
+                this.classList.add('hidden');
+            });
+
+            // Delete painting confirmation
+            document.querySelectorAll('.delete-painting-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    if (!confirm('Are you sure you want to delete this painting?')) {
+                        e.preventDefault();
+                    }
+                });
+            });
+
+            // Add hover effects for painting cards
+            document.querySelectorAll('.painting-item').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                    this.style.boxShadow = '0 10px 20px rgba(106, 90, 205, 0.4)';
+                });
+                
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            });
+        </script>
+    </body>
+    </html>

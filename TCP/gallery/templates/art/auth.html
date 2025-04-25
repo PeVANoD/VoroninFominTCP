@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Вход в Art Gallery</title>
+    <style>
+        .auth-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .auth-form {
+            margin-bottom: 20px;
+        }
+        .auth-form input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+        .auth-form button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .guest-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom: 2px solid #4CAF50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h2>Добро пожаловать в Art Gallery</h2>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('login')">Вход</div>
+            <div class="tab" onclick="showTab('register')">Регистрация</div>
+        </div>
+        
+        <!-- Форма входа -->
+        <div id="login-form" class="auth-form">
+            <input type="text" id="login-username" placeholder="Имя пользователя">
+            <input type="password" id="login-password" placeholder="Пароль">
+            <button onclick="login()">Войти</button>
+        </div>
+        
+        <!-- Форма регистрации -->
+        <div id="register-form" class="auth-form" style="display:none;">
+            <input type="text" id="register-username" placeholder="Имя пользователя">
+            <input type="email" id="register-email" placeholder="Email (необязательно)">
+            <input type="password" id="register-password" placeholder="Пароль">
+            <button onclick="register()">Зарегистрироваться</button>
+        </div>
+        
+        <!-- Гостевой вход -->
+        <button class="guest-btn" onclick="enterAsGuest()">Войти как гость</button>
+        
+        <div id="message" style="margin-top: 20px; color: red;"></div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'none';
+            
+            if (tabName === 'login') {
+                document.getElementById('login-form').style.display = 'block';
+            } else {
+                document.getElementById('register-form').style.display = 'block';
+            }
+        }
+        
+        function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            fetch('/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.access) {
+                    localStorage.setItem('access_token', data.access);
+                    localStorage.setItem('refresh_token', data.refresh);
+                    window.location.href = '/manage/';
+                } else {
+                    document.getElementById('message').textContent = 'Ошибка входа: ' + (data.detail || 'Неверные данные');
+                }
+            })
+            .catch(error => {
+                document.getElementById('message').textContent = 'Ошибка: ' + error;
+            });
+        }
+        
+        function register() {
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            
+            fetch('/register/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    email: email,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.username) {
+                    document.getElementById('message').textContent = 'Регистрация успешна! Теперь вы можете войти.';
+                    showTab('login');
+                } else {
+                    document.getElementById('message').textContent = 'Ошибка регистрации: ' + 
+                        (JSON.stringify(data) || 'Неизвестная ошибка');
+                }
+            })
+            .catch(error => {
+                document.getElementById('message').textContent = 'Ошибка: ' + error;
+            });
+        }
+        
+        function enterAsGuest() {
+            // Устанавливаем флаг гостя в sessionStorage
+            sessionStorage.setItem('is_guest', 'true');
+            window.location.href = '/manage/';
+        }
+    </script>
+</body>
+</html>
