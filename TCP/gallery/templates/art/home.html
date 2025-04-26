@@ -103,40 +103,40 @@
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        {% if not user.is_authenticated %}
-            <div class="auth-buttons">
-            <a href="{% url 'login' %}">Login</a>
-            <a href="{% url 'register' %}">Register</a>
-            </div>
-        {% else %}
-            <div class="auth-buttons">
-            <a href="{% url 'logout' %}">Logout</a>
-            </div>
-        {% endif %}
-        
-        {% if user.is_authenticated and user.is_artist %}
-        <li class="nav-item">
-            <a class="nav-link" href="{% url 'artist_dashboard' %}">Artist Dashboard</a>
-        </li>
-        {% endif %}
-
-        <h1 style="text-align: center;">Welcome to the Art Gallery</h1>
-        <div class="nav-buttons">
-            <a href="{% url 'paintingList' %}">View All Paintings</a>
-            <!--<a href="{% url 'tag-search' %}">Search by Tag</a>-->
-            <a href="{% url 'artists' %}">View All Artists</a>
-            {% if user.is_authenticated %}
-                {% if not user.is_superuser %}
-                <a href="{% url 'artist_dashboard' %}">Profile</a>
-                {% else %}
-                <a href="/admin/">Admin Panel</a>
-                {% endif %}
+    <body>
+        <div class="container">
+            {% if not user.is_authenticated %}
+                <div class="auth-buttons">
+                <a href="{% url 'login' %}">Login</a>
+                <a href="{% url 'register' %}">Register</a>
+                </div>
+            {% else %}
+                <div class="auth-buttons">
+                <a href="{% url 'logout' %}">Logout</a>
+                </div>
             {% endif %}
-            <!--<a href="{% url 'manage_content' %}">Manage Content</a>-->
+            
+            {% if user.is_authenticated and user.is_artist %}
+            <li class="nav-item">
+                <a class="text-align: left">Artist account</a>
+            </li>
+            {% endif %}
 
+            <h1 style="text-align: center;">Welcome to the Art Gallery</h1>
+            <div class="nav-buttons">
+                <a href="{% url 'paintingList' %}">View All Paintings</a>
+                <a href="{% url 'tag-search' %}">Search by Tag</a>
+                <a href="{% url 'artists' %}">View All Artists</a>
+                {% if user.is_authenticated %}
+                    {% if user.is_artist%}
+                    <a href="{% url 'artist_dashboard' %}">Profile</a>
+                    {% elif user.is_superuser%}
+                    <a href="/admin/">Admin Panel</a>
+                    {% endif %}
+                {% endif %}
+                <!--<a href="{% url 'manage_content' %}">Manage Content</a>-->
+
+            </div>
         </div>
-    </div>
-</body>
-</html>
+    </body>
+    </html>

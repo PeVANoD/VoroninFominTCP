@@ -40,19 +40,18 @@ class Artist(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        null=True,  # Временно разрешаем NULL
-        blank=True
+        related_name='artist_profile'
     )
-    biography  = models.TextField(blank=True)
-    photoURL  = models.ImageField(upload_to='artists/', blank=True)
+    biography = models.TextField(blank=True)
+    photoURL = models.ImageField(upload_to='artists/', blank=True)
 
     def __str__(self):
-        return self.user.username if self.user else "Unnamed Artist"
+        return self.user.username
     
 class Painting(models.Model):
     id = models.AutoField(primary_key=True)
     title = models.CharField(max_length=255)
-    image = models.ImageField(upload_to='paintings/')
+    imageURL = models.URLField()
     description = models.TextField(blank=True)
     artist = models.ForeignKey(Artist, on_delete=models.CASCADE)
     tags = models.ManyToManyField(Tag, blank=True)

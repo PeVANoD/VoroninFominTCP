@@ -135,7 +135,7 @@ def manage_content(request): #проверяем залогинен ли пол�
 
 #JWT
 
-
+@csrf_exempt
 def guest_page(request):
     paintings = Painting.objects.all()
     return render(request, 'art/guest_page.html', {
@@ -144,12 +144,14 @@ def guest_page(request):
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
-
+@csrf_exempt
 def custom_logout(request):
     logout(request)
     messages.success(request, "You have been successfully logged out.")
     return redirect('home')  # Перенаправляем на страницу входа
 
+from django.http import JsonResponse
+@csrf_exempt
 def custom_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -158,11 +160,32 @@ def custom_login(request):
         
         if user is not None:
             login(request, user)
-            return redirect('home')  # Замените 'home' на нужный URL
-        else:
-            messages.error(request, 'Invalid username or password')
+            
+            # Генерируем JWT-токен
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            
+            # Если это API запрос
+            if not request.headers.get('Accept') or 'text/html' not in request.headers.get('Accept', ''):
+                return JsonResponse({
+                    'access': access_token,
+                    'refresh': str(refresh),
+                })
+            
+            # Редирект на 'next' или 'home' по умолчанию
+            next_url = request.POST.get('next', 'home')  # Убедитесь, что 'home' - это имя вашего URL-шаблона
+            return redirect(next_url)
+        
+        # Обработка ошибки аутентификации
+        if not request.headers.get('Accept') or 'text/html' not in request.headers.get('Accept', ''):
+            return JsonResponse({'error': 'Invalid username or password'}, status=400)
+        messages.error(request, 'Invalid username or password')
     
-    return render(request, 'registration/custom_login.html')
+    # Добавляем параметр next в контекст
+    next_url = request.GET.get('next', 'home')  # Значение по умолчанию 'home'
+    return render(request, 'registration/custom_login.html', {'next': next_url})
+
+
 
 from .forms import CustomUserCreationForm  # Add this import
 
@@ -173,8 +196,21 @@ def custom_register(request):
             user = form.save(commit=False)
             user.is_artist = form.cleaned_data.get('is_artist', False)
             user.save()
+            
+            # Генерируем JWT токен после регистрации
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            
             login(request, user)
             messages.success(request, 'Registration successful!')
+            
+            # Если это API запрос, возвращаем токены
+            if not request.headers.get('Accept') or 'text/html' not in request.headers.get('Accept', ''):
+                return JsonResponse({
+                    'access': access_token,
+                    'refresh': str(refresh),
+                })
+            
             return redirect('home')
         else:
             for error in form.errors.values():
@@ -187,71 +223,93 @@ def custom_register(request):
 from .forms import ArtistProfileForm, PaintingForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-@login_required
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
+from rest_framework.permissions import IsAuthenticated
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def artist_dashboard(request):
-    if not request.user.is_artist:
-        return redirect('home')
-    
-    artist = get_object_or_404(Artist, user=request.user)
+    # Проверяем, является ли пользователь художником
+    if not request.user.is_authenticated or not request.user.is_artist:
+        return Response({"error": "Only artists can access this page"}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        artist = request.user.artist_profile
+    except Artist.DoesNotExist:
+        return Response({"error": "Artist profile not found"}, status=status.HTTP_404_NOT_FOUND)
+
     all_tags = Tag.objects.all()
-    
-    # Handle profile form
-    if request.method == 'POST' and 'profile_form' in request.POST:
-        profile_form = ArtistProfileForm(request.POST, request.FILES, instance=artist)
-        if profile_form.is_valid():
-            profile_form.save()
-            return redirect('artist_dashboard')
-    else:
-        profile_form = ArtistProfileForm(instance=artist)
-    
-    # Handle tag operations
-    if request.method == 'POST' and 'action' in request.POST:
-        if request.POST['action'] == 'create_tag':
-            tag_name = request.POST.get('tag_name')
-            if tag_name:
-                Tag.objects.get_or_create(name=tag_name)
+
+    # API RESPONSE (JSON)
+    if request.headers.get('Accept') == 'application/json':
+        paintings = Painting.objects.filter(artist=artist).order_by('-created_at')
+        serializer = {
+            'artist': {
+                'username': artist.user.username,
+                'email': artist.user.email,
+                'biography': artist.biography,
+                'photoURL': artist.photoURL.url if artist.photoURL else None
+            },
+            'paintings': [
+                {
+                    'id': p.id,
+                    'title': p.title,
+                    'imageURL': p.imageURL,
+                    'description': p.description,
+                    'created_at': p.created_at,
+                    'tags': [tag.name for tag in p.tags.all()]
+                } for p in paintings
+            ]
+        }
+        return Response(serializer)
+
+    # WEB RESPONSE (HTML)
+    if request.method == 'POST':
+        if 'profile_form' in request.POST:
+            profile_form = ArtistProfileForm(request.POST, request.FILES, instance=artist)
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, 'Profile updated successfully!')
                 return redirect('artist_dashboard')
+            else:
+                messages.error(request, 'Error updating profile')
         
-        elif request.POST['action'] == 'update_tag':
-            tag_id = request.POST.get('tag_id')
-            tag_name = request.POST.get('tag_name')
-            if tag_id and tag_name:
-                tag = get_object_or_404(Tag, id=tag_id)
-                tag.name = tag_name
-                tag.save()
-                return redirect('artist_dashboard')
-        
-        elif request.POST['action'] == 'delete_painting':
-            painting_id = request.POST.get('painting_id')
-            if painting_id:
-                painting = get_object_or_404(Painting, id=painting_id, artist=artist)
-                painting.delete()
-                return redirect('artist_dashboard')
-    
-    # Handle painting form
-    if request.method == 'POST' and 'painting_form' in request.POST:
-        painting_id = request.POST.get('painting_id')
-        
-        if painting_id:  # Editing existing painting
-            painting = get_object_or_404(Painting, id=painting_id, artist=artist)
-            painting_form = PaintingForm(request.POST, request.FILES, instance=painting)
-        else:  # Creating new painting
+        elif 'painting_form' in request.POST:
             painting_form = PaintingForm(request.POST, request.FILES)
+            if painting_form.is_valid():
+                painting = painting_form.save(commit=False)
+                painting.artist = artist
+                painting.save()
+                painting_form.save_m2m()
+                messages.success(request, 'Painting created successfully!')
+                return redirect('artist_dashboard')
+            else:
+                messages.error(request, 'Error in painting form')
         
-        if painting_form.is_valid():
-            painting = painting_form.save(commit=False)
-            painting.artist = artist
-            if 'image' in request.FILES:
-                painting.image = request.FILES['image']
-            painting.save()
-            painting_form.save_m2m()  # For tags
+        elif 'action' in request.POST:
+            action = request.POST['action']
+            
+            if action == 'create_tag':
+                tag_name = request.POST.get('tag_name', '').strip()
+                if tag_name:
+                    Tag.objects.get_or_create(name=tag_name)
+                    messages.success(request, f'Tag "{tag_name}" created')
+            
+            elif action == 'delete_painting':
+                painting_id = request.POST.get('painting_id')
+                if painting_id:
+                    painting = get_object_or_404(Painting, id=painting_id, artist=artist)
+                    painting.delete()
+                    messages.success(request, 'Painting deleted')
+            
             return redirect('artist_dashboard')
-    else:
-        painting_form = PaintingForm()
-    
-    # Get all artist's paintings
+
+    # Для GET запросов
     paintings = Painting.objects.filter(artist=artist).order_by('-created_at')
-    
+    profile_form = ArtistProfileForm(instance=artist)
+    painting_form = PaintingForm()
+
     return render(request, 'artist/dashboard.html', {
         'artist': artist,
         'profile_form': profile_form,

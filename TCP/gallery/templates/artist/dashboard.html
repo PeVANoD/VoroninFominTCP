@@ -384,15 +384,21 @@
     </head>
     <body>
         <a href="{% url 'home' %}" class="back-button">← Home</a>
-
-        {% block content %}
-        {% if not user.is_authenticated or not user.is_artist %}
+        
+        {% if not user.is_authenticated %}
+        <script>
+            window.location.href = "{% url 'login' %}?next={{ request.path }}";
+        </script>
+        {% elif not user.is_artist or not user.artist_profile %}
         <div class="alert alert-danger">
-            You don't have permission to access this page.
+            Artist access only. <a href="{% url 'home' %}">Return home</a>
         </div>
         {% else %}
         <div class="container mt-4">
             <h1>Artist Dashboard</h1>
+            <div class="mt-3">
+                <a href="{% url 'password_change' %}" class="btn btn-outline-primary">Change Password</a>
+            </div>
             <div class="row">
                 <div class="col-md-4">
                     <!-- Profile Block -->
@@ -406,7 +412,7 @@
                                 <input type="hidden" name="profile_form" value="1">
                                 <div class="form-group">
                                     <label for="id_username">Username</label>
-                                    <input type="text" class="form-control" id="id_username" name="username" value="{{ user.username }}">
+                                    <input type="text" class="form-control" id="id_username" name="username" value="{{ user.username }}" readonly>
                                 </div>
                                 <div class="form-group">
                                     <label for="id_email">Email</label>
@@ -414,20 +420,20 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="id_bio">Bio</label>
-                                    <textarea class="form-control" id="id_bio" name="bio" rows="3">{{ user.artist.bio }}</textarea>
+                                    <textarea class="form-control" id="id_bio" name="bio" rows="3">{{ user.artist_profile.biography }}</textarea>
                                 </div>
                                 <div class="form-group">
                                     <label for="id_profile_picture">Profile Picture</label>
                                     <input type="file" class="form-control" id="id_profile_picture" name="profile_picture">
-                                    {% if user.artist.photoURL %}
-                                    <small class="text-muted">Current: {{ user.artist.photoURL.name }}</small>
+                                    {% if user.artist_profile.photoURL %}
+                                    <small class="text-muted">Current: {{ user.artist_profile.photoURL.name }}</small>
                                     {% endif %}
                                 </div>
                                 <button type="submit" class="btn btn-primary">Update Profile</button>
                             </form>
                         </div>
                     </div>
-
+    
                     <!-- Tag Management -->
                     <div class="card mb-4">
                         <div class="card-header">
@@ -436,27 +442,23 @@
                         <div class="card-body">
                             <form method="post" id="tag-form">
                                 {% csrf_token %}
-                                <input type="hidden" name="tag_id" id="tag_id" value="">
                                 <div class="form-group">
-                                    <label for="tag_name">Tag Name</label>
+                                    <label for="tag_name">Create New Tag</label>
                                     <div class="tag-form-row">
                                         <input type="text" class="form-control" id="tag_name" name="tag_name" placeholder="Enter tag name" required>
                                     </div>
                                 </div>
                                 <div class="tag-form-buttons">
-                                    <button type="submit" class="btn btn-primary" name="action" value="create_tag" id="create-tag-btn">Create Tag</button>
-                                    <button type="submit" class="btn btn-success hidden" name="action" value="update_tag" id="update-tag-btn">Update Tag</button>
-                                    <button type="button" class="btn btn-secondary hidden" id="cancel-tag-btn">Cancel</button>
+                                    <button type="submit" class="btn btn-primary" name="action" value="create_tag">Create Tag</button>
                                 </div>
                             </form>
-
+    
                             <div class="mt-3">
                                 <h5>Available Tags</h5>
                                 <div class="tags">
                                     {% for tag in all_tags %}
-                                    <span class="badge bg-secondary tag-item" data-id="{{ tag.id }}" data-name="{{ tag.name }}">
+                                    <span class="badge bg-secondary">
                                         {{ tag.name }}
-                                        <button class="btn btn-sm btn-warning edit-tag-btn" data-id="{{ tag.id }}">✏️</button>
                                     </span>
                                     {% endfor %}
                                 </div>
@@ -472,7 +474,7 @@
                             <h3 id="painting-form-title">Add New Painting</h3>
                         </div>
                         <div class="card-body">
-                            <form method="post" enctype="multipart/form-data" id="painting-form">
+                            <form method="post" id="painting-form">
                                 {% csrf_token %}
                                 <input type="hidden" name="painting_id" id="painting_id" value="">
                                 <input type="hidden" name="painting_form" value="1">
@@ -485,8 +487,8 @@
                                     <textarea class="form-control" id="id_description" name="description" rows="3" required></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label for="id_image">Image</label>
-                                    <input type="file" class="form-control" id="id_image" name="image">
+                                    <label for="id_imageURL">Image URL</label>
+                                    <input type="url" class="form-control" id="id_imageURL" name="imageURL" required>
                                     <small id="current-image" class="text-muted"></small>
                                 </div>
                                 <div class="form-group">
@@ -515,7 +517,7 @@
                                 {% for painting in paintings %}
                                 <div class="col-md-4 mb-3">
                                     <div class="card h-100 painting-item" data-id="{{ painting.id }}">
-                                        <img src="{{ painting.image.url }}" class="card-img-top" alt="{{ painting.title }}">
+                                        <img src="{{ painting.imageURL }}" class="card-img-top" alt="{{ painting.title }}">
                                         <div class="card-body">
                                             <h5 class="card-title">{{ painting.title }}</h5>
                                             <p class="card-text">{{ painting.description|truncatechars:50 }}</p>
@@ -549,58 +551,31 @@
             </div>
         </div>
         {% endif %}
-        {% endblock %}
-
+    
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script>
 
-            // Tag management functionality
-            const tagForm = document.getElementById('tag-form');
-            const createTagBtn = document.getElementById('create-tag-btn');
-            const updateTagBtn = document.getElementById('update-tag-btn');
-            const cancelTagBtn = document.getElementById('cancel-tag-btn');
-            const tagIdInput = document.getElementById('tag_id');
-            const tagNameInput = document.getElementById('tag_name');
-
-            // Edit tag button click handler
-            document.querySelectorAll('.edit-tag-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const tagItem = this.closest('.tag-item');
-                    const tagId = tagItem.getAttribute('data-id');
-                    const tagName = tagItem.getAttribute('data-name');
-                    
-                    tagIdInput.value = tagId;
-                    tagNameInput.value = tagName;
-                    
-                    createTagBtn.classList.add('hidden');
-                    updateTagBtn.classList.remove('hidden');
-                    cancelTagBtn.classList.remove('hidden');
-                    
-                    tagNameInput.focus();
-                });
+            // Перехватчик для AJAX запросов
+            $(document).ajaxComplete(function(event, xhr, settings) {
+                if (xhr.status === 401) {  // Unauthorized
+                    alert('Your session has expired. Please login again.');
+                    window.location.href = "{% url 'login' %}";
+                }
             });
-
-            // Cancel tag edit
-            cancelTagBtn.addEventListener('click', function() {
-                tagIdInput.value = '';
-                tagNameInput.value = '';
-                createTagBtn.classList.remove('hidden');
-                updateTagBtn.classList.add('hidden');
-                this.classList.add('hidden');
-            });
-
+    
             // Painting form functionality
             const paintingForm = document.getElementById('painting-form');
             const paintingIdInput = document.getElementById('painting_id');
             const paintingTitleInput = document.getElementById('id_title');
             const paintingDescInput = document.getElementById('id_description');
-            const paintingImageInput = document.getElementById('id_image');
+            const paintingImageUrlInput = document.getElementById('id_imageURL');
             const paintingTagsSelect = document.getElementById('id_tags');
             const submitPaintingBtn = document.getElementById('submit-painting-btn');
             const cancelEditBtn = document.getElementById('cancel-edit-btn');
             const paintingFormTitle = document.getElementById('painting-form-title');
             const currentImageText = document.getElementById('current-image');
-
+    
             // Edit painting button click handler
             document.querySelectorAll('.edit-painting-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -608,12 +583,15 @@
                     const paintingCard = this.closest('.painting-item');
                     const paintingTitle = paintingCard.querySelector('.card-title').textContent;
                     const paintingDesc = paintingCard.querySelector('.card-text').textContent;
+                    const paintingImage = paintingCard.querySelector('img');
+                    const paintingImageUrl = paintingImage ? paintingImage.src : '';
                     const paintingTags = Array.from(paintingCard.querySelectorAll('.tags .badge')).map(el => el.textContent.trim());
                     
                     // Set form values
                     paintingIdInput.value = paintingId;
                     paintingTitleInput.value = paintingTitle;
                     paintingDescInput.value = paintingDesc;
+                    paintingImageUrlInput.value = paintingImageUrl;
                     
                     // Set selected tags
                     Array.from(paintingTagsSelect.options).forEach(option => {
@@ -623,20 +601,20 @@
                     // Update form UI
                     paintingFormTitle.textContent = 'Edit Painting';
                     submitPaintingBtn.textContent = 'Update Painting';
-                    currentImageText.textContent = 'Current image will be kept if no new file is selected';
+                    currentImageText.textContent = 'Current image: ' + (paintingImageUrl || 'none');
                     cancelEditBtn.classList.remove('hidden');
                     
                     // Scroll to form
                     paintingForm.scrollIntoView({ behavior: 'smooth' });
                 });
             });
-
+    
             // Cancel painting edit
             cancelEditBtn.addEventListener('click', function() {
                 paintingIdInput.value = '';
                 paintingTitleInput.value = '';
                 paintingDescInput.value = '';
-                paintingImageInput.value = '';
+                paintingImageUrlInput.value = '';
                 Array.from(paintingTagsSelect.options).forEach(option => {
                     option.selected = false;
                 });
@@ -646,7 +624,7 @@
                 currentImageText.textContent = '';
                 this.classList.add('hidden');
             });
-
+    
             // Delete painting confirmation
             document.querySelectorAll('.delete-painting-form').forEach(form => {
                 form.addEventListener('submit', function(e) {
@@ -655,7 +633,7 @@
                     }
                 });
             });
-
+    
             // Add hover effects for painting cards
             document.querySelectorAll('.painting-item').forEach(item => {
                 item.addEventListener('mouseenter', function() {

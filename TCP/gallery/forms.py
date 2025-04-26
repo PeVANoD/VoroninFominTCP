@@ -12,11 +12,15 @@ class ArtistProfileForm(forms.ModelForm):
 class PaintingForm(forms.ModelForm):
     class Meta:
         model = Painting
-        fields = ['title', 'description', 'image', 'tags']
+        fields = ['title', 'description', 'imageURL', 'tags']
         widgets = {
             'tags': forms.SelectMultiple(attrs={'class': 'form-select'}),
         }
         
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['imageURL'].label = "Image URL"
+
     def save(self, commit=True):
         painting = super().save(commit=False)
         if commit:
