@@ -40,14 +40,15 @@ User = get_user_model()
 @csrf_exempt
 def artists(request):
     # Получаем всех пользователей с пометкой is_artist=True
-    artist_users = User.objects.filter(is_artist=True).select_related('artist')
+    artist_users = User.objects.filter(is_artist=True).select_related('artist_profile')
     selected_username = request.GET.get('username')
     paintings = None
 
     if selected_username:
         try:
             artist_user = artist_users.get(username=selected_username)
-            paintings = Painting.objects.filter(artist=artist_user.artist)
+            # Получаем связанный профиль художника и фильтруем по нему картины
+            paintings = Painting.objects.filter(artist=artist_user.artist_profile)
         except User.DoesNotExist:
             paintings = Painting.objects.none()
     else:
